@@ -19,10 +19,6 @@ class AwsS3Store {
    * @param {String} options.bucketName Specifies the S3 bucket name.
    * @param {String} options.remoteDataPath Specifies the remote path to save authentication files.
    * @param {Object} options.s3Client The S3Client instance after configuring the AWS SDK.
-   * @param {Object} options.putObjectCommand  The PutObjectCommand class from `@aws-sdk/client-s3`.
-   * @param {Object} options.headObjectCommand  The HeadObjectCommand class from `@aws-sdk/client-s3`.
-   * @param {Object} options.getObjectCommand  The GetObjectCommand class from `@aws-sdk/client-s3`.
-   * @param {Object} options.deleteObjectCommand  The DeleteObjectCommand class from `@aws-sdk/client-s3`.
    */
   constructor({ bucketName, remoteDataPath, s3Client } = {}) {
     if (!bucketName)
@@ -111,17 +107,16 @@ class AwsS3Store {
       .join(this.remoteDataPath, `${options.session}.zip`)
       .replace(/\\/g, '/');
     options.remoteFilePath = remoteFilePath;
-    
-    // await this.#deletePrevious(options);
-    
+
     try {
-      const fileStream = fs.createReadStream(`${options.session}.zip`);
+      const fileBuffer = await fs.promises.readFile(`${options.session}.zip`);
       const params = {
         Bucket: this.bucketName,
         Key: remoteFilePath,
-        Body: fileStream,
+        Body: fileBuffer,
         ACL: 'private',
-        ContentType: 'application/zip'
+        ContentType: 'application/zip',
+        ContentEncoding: 'binary', // Explicitly specify binary encoding
       };
       await this.s3Client.send(new PutObjectCommand(params));
       this.debugLog(`[METHOD: save] File saved. PATH='${remoteFilePath}'.`);
@@ -186,36 +181,6 @@ class AwsS3Store {
         return;
       }
       this.debugLog(`[METHOD: delete] Error: ${err.message}`);
-      // throw err;
-      return;
-    }
-  }
-
-  async #deletePrevious(options) {
-    this.debugLog('[METHOD: #deletePrevious] Triggered.');
-
-    if (!options.remoteFilePath)
-      throw new Error('A valid remote file path is required for AwsS3Store.');
-    if ((await this.isValidConfig(options)) === false) return;
-
-    const params = {
-      Bucket: this.bucketName,
-      Key: options.remoteFilePath,
-    };
-    try {
-      await this.s3Client.send(new HeadObjectCommand(params));
-      await this.s3Client.send(new DeleteObjectCommand(params));
-      this.debugLog(
-        `[METHOD: #deletePrevious] File deleted. PATH='${options.remoteFilePath}'.`
-      );
-    } catch (err) {
-      if (err.name === 'NoSuchKey' || err.name === 'NotFound') {
-        this.debugLog(
-          `[METHOD: #deletePrevious] File not found. PATH='${options.remoteFilePath}'.`
-        );
-        return;
-      }
-      this.debugLog(`[METHOD: #deletePrevious] Error: ${err.message}`);
       // throw err;
       return;
     }
