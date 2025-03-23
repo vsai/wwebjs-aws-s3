@@ -2,7 +2,6 @@ const path = require('path');
 const fs = require('fs');
 const AWS = require('@aws-sdk/client-s3');
 const {
-  S3Client,
   ListObjectsCommand,
   PutObjectCommand,
   HeadObjectCommand,
@@ -194,7 +193,4 @@ class AwsS3Store {
   }
 }
 
-module.exports = {
-  AwsS3Store,
-  S3Client,
-};
+module.exports = AwsS3Store;

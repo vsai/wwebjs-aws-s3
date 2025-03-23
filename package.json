@@ -1,6 +1,6 @@
 {
   "name": "wwebjs-aws-s3",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A plugin for remote authentication on whatsapp-web.js and store session data on AWS S3.",
   "main": "index.js",
   "scripts": {
